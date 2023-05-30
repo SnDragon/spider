@@ -10,7 +10,11 @@ import (
 	"golang.org/x/text/transform"
 	"io"
 	"net/http"
+	"regexp"
 )
+
+// .通配符无法匹配换行符，而 HTML 文本中会经常出现换行符,所以用\s\S
+var headerRe = regexp.MustCompile("<div class=\"small_imgposition__PYVLm\">[\\s\\S]*?<h2>([\\s\\S]*?)</h2>")
 
 func main() {
 	url := "https://www.thepaper.cn/"
@@ -19,7 +23,10 @@ func main() {
 		fmt.Printf("read body err: %+v\n", err)
 		return
 	}
-	fmt.Printf("rsp body: %v\n", string(bytes))
+	matches := headerRe.FindAllSubmatch(bytes, -1)
+	for _, match := range matches {
+		fmt.Printf("match: %v\n", string(match[1]))
+	}
 }
 
 func Fetch(url string) ([]byte, error) {
