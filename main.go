@@ -4,7 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
-	"github.com/antchfx/htmlquery"
+	"github.com/PuerkitoBio/goquery"
 	"github.com/pkg/errors"
 	"golang.org/x/net/html/charset"
 	"golang.org/x/text/encoding"
@@ -25,16 +25,23 @@ func main() {
 		fmt.Printf("read body err: %+v\n", err)
 		return
 	}
+	// 1. 正则表达式
 	//matches := headerRe.FindAllSubmatch(bytes, -1)
 	//for _, match := range matches {
 	//	fmt.Printf("match: %v\n", string(match[1]))
 	//}
-	// 使用xpath获取
-	doc, _ := htmlquery.Parse(bytes.NewReader(rsp))
-	nodes := htmlquery.Find(doc, `//div[@class="small_cardcontent__BTALp"]//h2`)
-	for _, node := range nodes {
-		fmt.Printf("match: %v\n", node.FirstChild.Data)
-	}
+	// 2. 使用xpath获取
+	//doc, _ := htmlquery.Parse(bytes.NewReader(rsp))
+	//nodes := htmlquery.Find(doc, `//div[@class="small_cardcontent__BTALp"]//h2`)
+	//for _, node := range nodes {
+	//	fmt.Printf("match: %v\n", node.FirstChild.Data)
+	//}
+	// 3. css表达式
+	doc, _ := goquery.NewDocumentFromReader(bytes.NewReader(rsp))
+	doc.Find(".small_cardcontent__BTALp h2").Each(func(i int, s *goquery.Selection) {
+		content := s.Text()
+		fmt.Printf("match %s\n", content)
+	})
 }
 
 func Fetch(url string) ([]byte, error) {
