@@ -2,7 +2,9 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
+	"github.com/antchfx/htmlquery"
 	"github.com/pkg/errors"
 	"golang.org/x/net/html/charset"
 	"golang.org/x/text/encoding"
@@ -18,14 +20,20 @@ var headerRe = regexp.MustCompile("<div class=\"small_imgposition__PYVLm\">[\\s\
 
 func main() {
 	url := "https://www.thepaper.cn/"
-	bytes, err := Fetch(url)
+	rsp, err := Fetch(url)
 	if err != nil {
 		fmt.Printf("read body err: %+v\n", err)
 		return
 	}
-	matches := headerRe.FindAllSubmatch(bytes, -1)
-	for _, match := range matches {
-		fmt.Printf("match: %v\n", string(match[1]))
+	//matches := headerRe.FindAllSubmatch(bytes, -1)
+	//for _, match := range matches {
+	//	fmt.Printf("match: %v\n", string(match[1]))
+	//}
+	// 使用xpath获取
+	doc, _ := htmlquery.Parse(bytes.NewReader(rsp))
+	nodes := htmlquery.Find(doc, `//div[@class="small_cardcontent__BTALp"]//h2`)
+	for _, node := range nodes {
+		fmt.Printf("match: %v\n", node.FirstChild.Data)
 	}
 }
 
