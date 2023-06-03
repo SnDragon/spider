@@ -1,17 +1,8 @@
 package main
 
 import (
-	"bufio"
-	"bytes"
 	"fmt"
-	"github.com/PuerkitoBio/goquery"
-	"github.com/pkg/errors"
-	"golang.org/x/net/html/charset"
-	"golang.org/x/text/encoding"
-	"golang.org/x/text/encoding/unicode"
-	"golang.org/x/text/transform"
-	"io"
-	"net/http"
+	"github.com/SnDragon/spider/collect"
 	"regexp"
 )
 
@@ -19,12 +10,16 @@ import (
 var headerRe = regexp.MustCompile("<div class=\"small_imgposition__PYVLm\">[\\s\\S]*?<h2>([\\s\\S]*?)</h2>")
 
 func main() {
-	url := "https://www.thepaper.cn/"
-	rsp, err := Fetch(url)
+	//url := "https://www.thepaper.cn/"
+	url := "https://book.douban.com/subject/1007305"
+	//var f collect.Fetcher = &collect.BaseFetcher{}
+	var f collect.Fetcher = &collect.BrowserFetcher{}
+	rsp, err := f.Get(url)
 	if err != nil {
 		fmt.Printf("read body err: %+v\n", err)
 		return
 	}
+	fmt.Printf("rsp body: %v", string(rsp))
 	// 1. 正则表达式
 	//matches := headerRe.FindAllSubmatch(bytes, -1)
 	//for _, match := range matches {
@@ -37,34 +32,9 @@ func main() {
 	//	fmt.Printf("match: %v\n", node.FirstChild.Data)
 	//}
 	// 3. css表达式
-	doc, _ := goquery.NewDocumentFromReader(bytes.NewReader(rsp))
-	doc.Find(".small_cardcontent__BTALp h2").Each(func(i int, s *goquery.Selection) {
-		content := s.Text()
-		fmt.Printf("match %s\n", content)
-	})
-}
-
-func Fetch(url string) ([]byte, error) {
-	rsp, err := http.Get(url)
-	if err != nil {
-		return nil, errors.Wrapf(err, "fetch url")
-	}
-	if rsp.StatusCode != http.StatusOK {
-		fmt.Printf("rsp status not 200\n")
-		return nil, errors.Errorf("rsp status: %v not 200", rsp.StatusCode)
-	}
-	reader := bufio.NewReader(rsp.Body)
-	e := DetermineEncoding(reader)
-	utf8Reader := transform.NewReader(reader, e.NewDecoder())
-	return io.ReadAll(utf8Reader)
-}
-
-func DetermineEncoding(r *bufio.Reader) encoding.Encoding {
-	bytes, err := r.Peek(1024)
-	if err != nil {
-		fmt.Printf("DetermineEncoding Peek err: %+v", err)
-		return unicode.UTF8
-	}
-	e, _, _ := charset.DetermineEncoding(bytes, "")
-	return e
+	//doc, _ := goquery.NewDocumentFromReader(bytes.NewReader(rsp))
+	//doc.Find(".small_cardcontent__BTALp h2").Each(func(i int, s *goquery.Selection) {
+	//	content := s.Text()
+	//	fmt.Printf("match %s\n", content)
+	//})
 }
