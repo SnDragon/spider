@@ -3,7 +3,9 @@ package main
 import (
 	"fmt"
 	"github.com/SnDragon/spider/collect"
+	"github.com/SnDragon/spider/proxy"
 	"regexp"
+	"time"
 )
 
 // .通配符无法匹配换行符，而 HTML 文本中会经常出现换行符,所以用\s\S
@@ -11,9 +13,17 @@ var headerRe = regexp.MustCompile("<div class=\"small_imgposition__PYVLm\">[\\s\
 
 func main() {
 	//url := "https://www.thepaper.cn/"
-	url := "https://book.douban.com/subject/1007305"
+	//url := "https://book.douban.com/subject/1007305"
+	url := "https://www.google.com/"
 	//var f collect.Fetcher = &collect.BaseFetcher{}
-	var f collect.Fetcher = &collect.BrowserFetcher{}
+	proxyFunc, err := proxy.RoundRobinProxySwitcher("http://127.0.0.1:12639")
+	if err != nil {
+		fmt.Printf("proxy.RoundRobinProxySwitcher err: %+v", err)
+	}
+	var f collect.Fetcher = &collect.BrowserFetcher{
+		Timeout: time.Second * 3,
+		Proxy:   proxyFunc,
+	}
 	rsp, err := f.Get(url)
 	if err != nil {
 		fmt.Printf("read body err: %+v\n", err)

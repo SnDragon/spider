@@ -3,6 +3,7 @@ package collect
 import (
 	"bufio"
 	"fmt"
+	"github.com/SnDragon/spider/proxy"
 	"github.com/pkg/errors"
 	"golang.org/x/net/html/charset"
 	"golang.org/x/text/encoding"
@@ -10,6 +11,7 @@ import (
 	"golang.org/x/text/transform"
 	"io"
 	"net/http"
+	"time"
 )
 
 type Fetcher interface {
@@ -45,10 +47,19 @@ func DetermineEncoding(r *bufio.Reader) encoding.Encoding {
 }
 
 type BrowserFetcher struct {
+	Timeout time.Duration   // 超时时间
+	Proxy   proxy.ProxyFunc // 代理函数
 }
 
 func (b *BrowserFetcher) Get(url string) ([]byte, error) {
-	c := &http.Client{}
+	c := &http.Client{
+		Timeout: b.Timeout,
+	}
+	if b.Proxy != nil {
+		transport := http.DefaultTransport.(*http.Transport)
+		transport.Proxy = b.Proxy
+		c.Transport = transport
+	}
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, errors.Wrapf(err, "http.NewRequest err")
