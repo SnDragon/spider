@@ -1,9 +1,11 @@
 package main
 
 import (
-	"fmt"
 	"github.com/SnDragon/spider/collect"
+	"github.com/SnDragon/spider/log"
 	"github.com/SnDragon/spider/proxy"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 	"regexp"
 	"time"
 )
@@ -12,13 +14,17 @@ import (
 var headerRe = regexp.MustCompile("<div class=\"small_imgposition__PYVLm\">[\\s\\S]*?<h2>([\\s\\S]*?)</h2>")
 
 func main() {
+	plugin, c := log.NewFilePlugin("./app.log", zapcore.InfoLevel)
+	defer c.Close()
+	logger := log.NewLogger(plugin)
+	logger.Info("log init success")
 	//url := "https://www.thepaper.cn/"
 	//url := "https://book.douban.com/subject/1007305"
 	url := "https://www.google.com/"
 	//var f collect.Fetcher = &collect.BaseFetcher{}
 	proxyFunc, err := proxy.RoundRobinProxySwitcher("http://127.0.0.1:12639")
 	if err != nil {
-		fmt.Printf("proxy.RoundRobinProxySwitcher err: %+v", err)
+		logger.Error("proxy.RoundRobinProxySwitcher err: ", zap.Error(err))
 	}
 	var f collect.Fetcher = &collect.BrowserFetcher{
 		Timeout: time.Second * 3,
@@ -26,10 +32,10 @@ func main() {
 	}
 	rsp, err := f.Get(url)
 	if err != nil {
-		fmt.Printf("read body err: %+v\n", err)
+		logger.Error("read body err", zap.Error(err))
 		return
 	}
-	fmt.Printf("rsp body: %v", string(rsp))
+	logger.Info("rsp body len: ", zap.Int("len", len(rsp)))
 	// 1. 正则表达式
 	//matches := headerRe.FindAllSubmatch(bytes, -1)
 	//for _, match := range matches {
